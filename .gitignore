@@ -172,3 +172,5 @@ crashlytics-build.properties
 fabric.properties
 
 /.idea
+/lesson3/gb_blog.db
+/lesson1/
