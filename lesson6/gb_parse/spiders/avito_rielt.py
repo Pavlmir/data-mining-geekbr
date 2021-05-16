@@ -9,23 +9,21 @@ class AvitoSpider(scrapy.Spider):
     name = 'avito'
     allowed_domains = ['avito.ru']
     city = "irkutsk"
-    start_urls = [f"https://www.avito.ru/{city}/kvartiry/prodam"]
+    start_urls = [f"https://www.avito.ru/{city}/kvartiry/prodam-ASgBAgICAUSSA8YQ"]
 
     def parse(self, response):
         for num in response.xpath('//div[@data-marker="pagination-button"]//span/text()'):
             try:
                 tmp = int(num.get())
-                yield response.follow(f'/moskva/kvartiry/?p={tmp}', callback=self.parse)
+                yield response.follow(f'/{self.city}/kvartiry/?p={tmp}', callback=self.parse)
 
             except TypeError as e:
                 continue
             except ValueError as e:
                 continue
 
-
         for ads_url in response.css('div.item_table h3.snippet-title a.snippet-link::attr("href")'):
             yield response.follow(ads_url, callback=self.parse_ads)
-
 
     def parse_ads(self, response):
         item = ItemLoader(AvitoRealEstateItem(), response)
