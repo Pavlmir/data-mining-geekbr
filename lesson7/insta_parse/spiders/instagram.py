@@ -1,8 +1,8 @@
 import json
-import datetime
 import scrapy
 from ..items import TagParseItem, PostParseItem
 from ..loaders import TagLoader, PostLoader
+from datetime import datetime
 
 
 class InstagramSpider(scrapy.Spider):
@@ -27,7 +27,13 @@ class InstagramSpider(scrapy.Spider):
                 self._login_url,
                 method="POST",
                 callback=self.parse,
-                formdata={"username": self.login, "enc_password": self.password},
+                formdata={
+                    'username': self.login,
+                    # <-- note the '0' - that means we want to use plain passwords
+                    'enc_password': f'#PWD_INSTAGRAM_BROWSER:0:{int(datetime.now().timestamp())}:{self.password}',
+                    'queryParams': {},
+                    'optIntoOneTap': 'false'
+                },
                 headers={"X-CSRFToken": js_data["config"]["csrf_token"]},
             )
         except AttributeError:
@@ -48,7 +54,7 @@ class InstagramSpider(scrapy.Spider):
         yield from self.post_parse(top_posts, token, tag_name, 'top')
         recent_posts = data['entry_data']['TagPage'][0]['data'].pop('recent')
         yield from self.post_parse(recent_posts, token, tag_name, 'recent')
-        tag_loader.add_value("date_parse", datetime.datetime.now())
+        tag_loader.add_value("date_parse", datetime.now())
         tag_loader.add_value("data", data['entry_data']['TagPage'][0]['data'])
         yield tag_loader.load_item()
 
@@ -62,7 +68,7 @@ class InstagramSpider(scrapy.Spider):
                 result.update(pagination)
                 item = PostParseItem()
                 post_loader = PostLoader(item=item)
-                post_loader.add_value("date_parse", datetime.datetime.now())
+                post_loader.add_value("date_parse", datetime.now())
                 post_loader.add_value("data", result)
                 yield post_loader.load_item()
         if pagination['more_available'] and (type_post == 'recent'):
